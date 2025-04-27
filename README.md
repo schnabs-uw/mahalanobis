@@ -1,77 +1,80 @@
-# Mahalanobis Distance Demo Repository
+# Mahalanobis Distance Interactive Demo
 
-This repository contains Python scripts demonstrating the calculation of Euclidean and Mahalanobis distances. Follow the steps below to set up and run the scripts.
+This repository contains both Python (Dash) and React implementations of an interactive Mahalanobis Distance visualization tool.
 
-## Prerequisites
+## Python Version (Dash)
 
-Ensure you have Python installed on your system. You can download it from [python.org](https://www.python.org/).
+### Requirements
+- Python 3.x
+- Required packages are listed in `requirements.txt`
 
-## Setup
-
-1. Clone the repository or download the source code.
-2. Navigate to the project directory:
-   ```bash
-   cd pylearn
-   ```
-3. Create and activate a virtual environment (recommended):
-   ```bash
-   python -m venv venv
-   
-   # On Windows
-   venv\Scripts\activate
-   
-   # On macOS/Linux
-   source venv/bin/activate
-   ```
-
-4. Install the required dependencies using pip:
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-## Virtual Environment Setup
-
-It is recommended to use a virtual environment to manage dependencies. Follow these steps to create and activate a virtual environment:
-
-1. Create a virtual environment:
-   ```bash
-   python -m venv venv
-   ```
-
-2. Activate the virtual environment:
-   - On Windows:
-     ```bash
-     venv\Scripts\activate
-     ```
-   - On macOS/Linux:
-     ```bash
-     source venv/bin/activate
-     ```
-
-3. To deactivate the virtual environment, run:
-   ```bash
-   deactivate
-   ```
-
-## Running the Scripts
-
-### Euclidean Distance Demo
-
-To run the Euclidean distance demonstration script, execute the following command:
-```bash
-python euclidean_distance_demo.py
+### Installation
+```powershell
+pip install -r requirements.txt
 ```
 
-### Mahalanobis Distance Demo
-
-To run the Mahalanobis distance demonstration script, execute the following command:
-```bash
-python mahalanobis_distance_demo.py
+### Running the App
+```powershell
+python mahalanobis_distance_app.py
 ```
 
-## Additional Information
+The app will be available at `http://localhost:8050`
 
-- The `requirements.txt` file lists the dependencies required for the scripts, including `numpy`, `matplotlib`, and `scipy`.
-- The scripts generate visualizations and outputs to help understand the distance calculations.
+## React Version (TypeScript)
 
-Feel free to explore and modify the scripts to suit your needs.
+### Requirements
+- Node.js (LTS version)
+- npm (comes with Node.js)
+
+### Installation
+```powershell
+cd mahalanobis-frontend
+npm install
+```
+
+### Running the App
+```powershell
+cd mahalanobis-frontend
+npm start
+```
+
+The app will be available at `http://localhost:3000`
+
+## Features (Both Versions)
+
+- Interactive visualization of Mahalanobis Distance
+- Dataset and Test point manipulation
+- Real-time calculation and display of:
+  - Mahalanobis distances
+  - Covariance ellipses (1, 2, and 3 standard deviations)
+  - Dataset and test point coordinates
+
+### Interactive Elements
+- Add individual points to either dataset
+- Regenerate random points (all, dataset, or test points)
+- Edit point coordinates through tables
+- Delete individual points
+- Visual feedback with distances displayed above test points
+
+### Mathematical Components
+- Covariance matrix calculation
+- Eigenvalue/eigenvector computation
+- Mahalanobis distance calculation
+- Ellipse generation based on covariance
+
+## Implementation Details
+
+### Python Version
+- Built with Dash and Plotly
+- Uses NumPy for mathematical operations
+- Dash callbacks for reactivity
+
+### React Version
+- Built with React and TypeScript
+- Uses ECharts for visualization
+- Uses mathjs for mathematical operations
+- Material-UI for modern UI components
+- Client-side calculations for improved responsiveness
+
+## License
+MIT License
