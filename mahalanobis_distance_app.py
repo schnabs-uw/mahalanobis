@@ -218,7 +218,9 @@ app.layout = html.Div([
     html.Div([
         html.Button('Add Dataset Point', id='add-dataset-btn', n_clicks=0, style={'marginRight': '10px'}),
         html.Button('Add Test Point', id='add-test-btn', n_clicks=0, style={'marginRight': '10px'}),
-        html.Button('Regenerate Points', id='regenerate-btn', n_clicks=0, style={'marginRight': '10px'}),
+        html.Button('Regenerate All Points', id='regenerate-btn', n_clicks=0, style={'marginRight': '10px'}),
+        html.Button('Regenerate Dataset', id='regenerate-dataset-btn', n_clicks=0, style={'marginRight': '10px'}),
+        html.Button('Regenerate Test Points', id='regenerate-test-btn', n_clicks=0, style={'marginRight': '10px'}),
     ], style={'marginBottom': '20px'}),
 
     html.Div([ # Main container for graph and tables
@@ -282,7 +284,9 @@ app.layout = html.Div([
     Output('selected-test-index', 'data'),
     Input('add-dataset-btn', 'n_clicks'),
     Input('add-test-btn', 'n_clicks'),
-    Input('regenerate-btn', 'n_clicks'),  # Added regenerate button input
+    Input('regenerate-btn', 'n_clicks'),
+    Input('regenerate-dataset-btn', 'n_clicks'),
+    Input('regenerate-test-btn', 'n_clicks'),
     Input('main-graph', 'selectedData'),
     Input('dataset-table', 'data'),
     Input('test-table', 'data'),
@@ -296,7 +300,9 @@ app.layout = html.Div([
 def sync_data_sources(
     add_ds_clicks,
     add_test_clicks,
-    regenerate_clicks,  # Added parameter
+    regenerate_clicks,
+    regenerate_dataset_clicks,
+    regenerate_test_clicks,
     selected_graph_data,
     ds_table_data,
     test_table_data,
@@ -311,14 +317,13 @@ def sync_data_sources(
     new_selected_ds_idx = selected_ds_idx
     new_selected_test_idx = selected_test_idx
 
-    # Handle regenerate button click
+    # Handle regenerate buttons
     if trigger == 'regenerate-btn':
-        # Generate new random dataset points
+        # Generate new random dataset and test points
         ds_points_updated = [
             [np.random.uniform(-5, 25), np.random.uniform(-5, 15)]
             for _ in range(num_dataset_points)
         ]
-        # Generate new random test points
         test_points_updated = [
             [np.random.uniform(-5, 25), np.random.uniform(-5, 15)]
             for _ in range(num_test_points)
@@ -326,8 +331,26 @@ def sync_data_sources(
         new_selected_ds_idx = None
         new_selected_test_idx = None
         return ds_points_updated, test_points_updated, new_selected_ds_idx, new_selected_test_idx
+    
+    elif trigger == 'regenerate-dataset-btn':
+        # Generate only new random dataset points
+        ds_points_updated = [
+            [np.random.uniform(-5, 25), np.random.uniform(-5, 15)]
+            for _ in range(num_dataset_points)
+        ]
+        new_selected_ds_idx = None
+        new_selected_test_idx = None
+    
+    elif trigger == 'regenerate-test-btn':
+        # Generate only new random test points
+        test_points_updated = [
+            [np.random.uniform(-5, 25), np.random.uniform(-5, 15)]
+            for _ in range(num_test_points)
+        ]
+        new_selected_ds_idx = None
+        new_selected_test_idx = None
 
-    # --- Handle Button Clicks ---
+    # --- Handle other Button Clicks ---
     if trigger == 'add-dataset-btn':
         if ds_points_updated:
             # Calculate ranges from existing points
