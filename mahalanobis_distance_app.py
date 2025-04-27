@@ -188,15 +188,21 @@ def make_figure(dataset_points, test_points):
     return fig
 
 
-# Initial data
+# Initial data - randomly generated
+np.random.seed()  # Reset random seed each time
+num_dataset_points = 20
+num_test_points = 16
+
+# Generate random dataset points in a reasonable range
 initial_dataset_points = np.array([
-    [1, 2], [2, 3], [3, 4], [4, 5], [5, 2], [6, 3], [7, 8], [8, 1], [9, 5], [10, 6],
-    [11, 7], [12, 8], [13, 9], [14, 10], [15, 5], [16, 4], [17, 3], [18, 2], [19, 1], [20, 0]
+    [np.random.uniform(-5, 25), np.random.uniform(-5, 15)] 
+    for _ in range(num_dataset_points)
 ])
 
+# Generate random test points in a similar range
 initial_test_points = np.array([
-    [5, 6], [3, 3], [6, 7], [2, 1], [8, 9], [7, 2], [10, 10], [1, 1],
-    [12, 12], [14, 14], [16, 16], [18, 18], [20, 20], [0, 0], [5, 15], [10, 5]
+    [np.random.uniform(-5, 25), np.random.uniform(-5, 15)] 
+    for _ in range(num_test_points)
 ])
 
 
@@ -212,6 +218,7 @@ app.layout = html.Div([
     html.Div([
         html.Button('Add Dataset Point', id='add-dataset-btn', n_clicks=0, style={'marginRight': '10px'}),
         html.Button('Add Test Point', id='add-test-btn', n_clicks=0, style={'marginRight': '10px'}),
+        html.Button('Regenerate Points', id='regenerate-btn', n_clicks=0, style={'marginRight': '10px'}),
     ], style={'marginBottom': '20px'}),
 
     html.Div([ # Main container for graph and tables
@@ -275,32 +282,50 @@ app.layout = html.Div([
     Output('selected-test-index', 'data'),
     Input('add-dataset-btn', 'n_clicks'),
     Input('add-test-btn', 'n_clicks'),
+    Input('regenerate-btn', 'n_clicks'),  # Added regenerate button input
     Input('main-graph', 'selectedData'),
-    Input('dataset-table', 'data'),  # Added table data as inputs
-    Input('test-table', 'data'),     # Added table data as inputs
+    Input('dataset-table', 'data'),
+    Input('test-table', 'data'),
     State('dataset-points', 'data'),
     State('test-points', 'data'),
     State('selected-dataset-index', 'data'),
     State('selected-test-index', 'data'),
     prevent_initial_call=True,
-    allow_duplicate=True  # Allow duplicate outputs
+    allow_duplicate=True
 )
 def sync_data_sources(
     add_ds_clicks,
     add_test_clicks,
+    regenerate_clicks,  # Added parameter
     selected_graph_data,
-    ds_table_data,     # Added table data parameters
-    test_table_data,   # Added table data parameters
+    ds_table_data,
+    test_table_data,
     current_ds_points,
     current_test_points,
     selected_ds_idx,
     selected_test_idx):
 
     trigger = ctx.triggered_id
-    ds_points_updated = list(current_ds_points) # Work with copies
+    ds_points_updated = list(current_ds_points)
     test_points_updated = list(current_test_points)
-    new_selected_ds_idx = selected_ds_idx # Start with current selection
+    new_selected_ds_idx = selected_ds_idx
     new_selected_test_idx = selected_test_idx
+
+    # Handle regenerate button click
+    if trigger == 'regenerate-btn':
+        # Generate new random dataset points
+        ds_points_updated = [
+            [np.random.uniform(-5, 25), np.random.uniform(-5, 15)]
+            for _ in range(num_dataset_points)
+        ]
+        # Generate new random test points
+        test_points_updated = [
+            [np.random.uniform(-5, 25), np.random.uniform(-5, 15)]
+            for _ in range(num_test_points)
+        ]
+        new_selected_ds_idx = None
+        new_selected_test_idx = None
+        return ds_points_updated, test_points_updated, new_selected_ds_idx, new_selected_test_idx
 
     # --- Handle Button Clicks ---
     if trigger == 'add-dataset-btn':
