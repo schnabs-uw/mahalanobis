@@ -50,7 +50,8 @@ export function calculateEigenvectors(matrix: number[][]): { values: number[], v
     
     // Power iteration method for largest eigenvalue/vector
     const powerIteration = (matrix: number[][], maxIter: number = 100): { value: number, vector: number[] } => {
-        let vector = Array(n).fill(0).map(() => Math.random());
+        // Use a deterministic starting vector instead of random to ensure consistency
+        let vector = [1, 0]; // Start with a consistent initial vector
         let value = 0;
         
         for (let i = 0; i < maxIter; i++) {
@@ -65,7 +66,19 @@ export function calculateEigenvectors(matrix: number[][]): { values: number[], v
         return { value, vector };
     };
     
+    // Normalize eigenvector direction for consistency
+    const normalizeDirection = (vector: number[]): number[] => {
+        // Always orient the eigenvector so that the first non-zero component is positive
+        // This ensures consistent direction regardless of convergence path
+        const firstNonZeroIndex = vector.findIndex(x => Math.abs(x) > 1e-10);
+        if (firstNonZeroIndex !== -1 && vector[firstNonZeroIndex] < 0) {
+            return vector.map(x => -x);
+        }
+        return vector;
+    };
+    
     const result1 = powerIteration(matrix);
+    result1.vector = normalizeDirection(result1.vector);
     
     // Deflate matrix to find second eigenvalue/vector
     const deflated = subtract(
@@ -77,6 +90,7 @@ export function calculateEigenvectors(matrix: number[][]): { values: number[], v
     ) as number[][];
     
     const result2 = powerIteration(deflated);
+    result2.vector = normalizeDirection(result2.vector);
     
     return {
         values: [result1.value, result2.value],

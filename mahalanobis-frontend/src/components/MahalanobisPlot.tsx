@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import ReactECharts from 'echarts-for-react';
-import { Point, calculateMahalanobisDistance, calculateEllipse } from '../utils/math';
+import { Point, calculateMahalanobisDistance, calculateEllipse, calculateEigenvectors } from '../utils/math';
 import { 
     Button, 
     Stack, 
@@ -64,9 +64,36 @@ export const MahalanobisPlot: React.FC<MahalanobisPlotProps> = ({
     useEffect(() => {
         setDatasetPoints(generateRandomPoints(initialDatasetPoints));
         setTestPoints(generateRandomPoints(initialTestPoints));
-    }, [initialDatasetPoints, initialTestPoints]);
+    }, [initialDatasetPoints, initialTestPoints]);    const getChartOptions = () => {
+        // Calculate mean, covariance matrix, and eigenvectors
+        let mean = { x: 0, y: 0 };
+        let covMatrix = [[0, 0], [0, 0]];
+        
+        if (datasetPoints.length >= 2) {
+            // Calculate mean
+            mean = datasetPoints.reduce(
+                (acc, p) => ({ 
+                    x: acc.x + p.x / datasetPoints.length, 
+                    y: acc.y + p.y / datasetPoints.length 
+                }),
+                { x: 0, y: 0 }
+            );
 
-    const getChartOptions = () => {
+            // Calculate covariance matrix
+            datasetPoints.forEach(p => {
+                const dx = p.x - mean.x;
+                const dy = p.y - mean.y;
+                covMatrix[0][0] += dx * dx / datasetPoints.length;
+                covMatrix[0][1] += dx * dy / datasetPoints.length;
+                covMatrix[1][0] += dx * dy / datasetPoints.length;
+                covMatrix[1][1] += dy * dy / datasetPoints.length;
+            });
+
+            // Add small regularization term
+            covMatrix[0][0] += 1e-6;
+            covMatrix[1][1] += 1e-6;
+        }
+
         const ellipses = datasetPoints.length >= 2 
             ? [1, 2, 3].map(std => calculateEllipse(datasetPoints, std))
             : [];
@@ -75,22 +102,79 @@ export const MahalanobisPlot: React.FC<MahalanobisPlotProps> = ({
             calculateMahalanobisDistance(point, datasetPoints)
         );
 
-        return {
+        // Calculate eigenvectors and scale them for visualization
+        const { values: eigenvalues, vectors: eigenvectors } = 
+            datasetPoints.length >= 2 ? calculateEigenvectors(covMatrix) : { values: [], vectors: [] };
+
+        // Scale factor for eigenvector visualization
+        const scaleFactor = 5;
+        const eigenvectorLines = eigenvalues.map((value, i) => ({            name: `Eigenvector ${i + 1} (λ=${value.toFixed(2)})`,
+            type: 'line',
+            data: [
+                [mean.x, mean.y],
+                [
+                    mean.x + eigenvectors[0][i] * Math.sqrt(Math.abs(value)) * scaleFactor,
+                    mean.y + eigenvectors[1][i] * Math.sqrt(Math.abs(value)) * scaleFactor
+                ]
+            ],
+            symbol: ['none', 'arrow'],
+            symbolSize: 10,
+            lineStyle: {
+                color: i === 0 ? '#FF7F0E' : '#2CA02C', // Orange for first, green for second
+                width: 2
+            },
+            label: {
+                show: true,
+                formatter: `λ${i + 1}=${value.toFixed(2)}`,
+                position: 'end'
+            },
+            legend: {
+                show: true
+            }
+        }));        return {
             title: {
                 text: 'Mahalanobis Distance Interactive Demo'
-            },
-            tooltip: {
-                trigger: 'item'
+            },            legend: {
+                show: true,
+                top: 'bottom',
+                padding: [5, 5],
+                itemGap: 20,
+                data: [
+                    { name: 'Dataset Points', icon: 'circle' },
+                    { name: 'Test Points', icon: 'circle' },
+                    ...eigenvalues.map((value, i) => ({ 
+                        name: `Eigenvector ${i + 1} (λ=${value.toFixed(2)})`, 
+                        icon: 'line',
+                        itemStyle: {
+                            color: i === 0 ? '#FF7F0E' : '#2CA02C'
+                        }
+                    })),
+                    ...Array(3).fill(0).map((_, i) => ({ 
+                        name: `${i + 1}-std Ellipse`, 
+                        icon: 'line',
+                        itemStyle: {
+                            color: ['green', 'blue', 'purple'][i]
+                        }
+                    }))
+                ]
+            },            tooltip: {
+                trigger: 'item',
+                formatter: function(params: any) {
+                    if (params.seriesName.includes('Eigenvector')) {
+                        return params.seriesName;
+                    }
+                    return params.value;
+                }
             },
             xAxis: {
                 type: 'value',
-                min: -10,
-                max: 30
+                min: -12,
+                max: 36
             },
             yAxis: {
                 type: 'value',
-                min: -10,
-                max: 25
+                min: -12,
+                max: 30
             },
             series: [
                 {
@@ -111,7 +195,9 @@ export const MahalanobisPlot: React.FC<MahalanobisPlotProps> = ({
                         }
                     })),
                     itemStyle: { color: 'red' }
-                },                ...ellipses.map((points, i) => ({
+                },
+                ...eigenvectorLines,
+                ...ellipses.map((points, i) => ({
                     name: `${i + 1}-std Ellipse`,
                     type: 'line',
                     data: points.map(p => [p.x, p.y]),
