@@ -122,11 +122,19 @@ export const MahalanobisPlot: React.FC<MahalanobisPlotProps> = ({
             lineStyle: {
                 color: i === 0 ? '#FF7F0E' : '#2CA02C', // Orange for first, green for second
                 width: 2
-            },
-            label: {
+            },            label: {
                 show: true,
                 formatter: `λ${i + 1}=${value.toFixed(2)}`,
-                position: 'end'
+                position: 'end',
+                offset: [i === 0 ? 10 : -10, i === 0 ? -10 : 10], // Offset labels to prevent overlap
+                backgroundColor: 'rgba(255, 255, 255, 0.8)',
+                borderColor: i === 0 ? '#FF7F0E' : '#2CA02C',
+                borderWidth: 1,
+                borderRadius: 3,
+                padding: [2, 4],
+                color: i === 0 ? '#FF7F0E' : '#2CA02C',
+                fontSize: 12,
+                fontWeight: 'bold'
             },
             legend: {
                 show: true
