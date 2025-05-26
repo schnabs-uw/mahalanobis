@@ -1,0 +1,15 @@
+{
+  "files": {
+    "main.css": "/mahalanobis/static/css/main.e6c13ad2.css",
+    "main.js": "/mahalanobis/static/js/main.bb478f52.js",
+    "static/js/453.6656eb8e.chunk.js": "/mahalanobis/static/js/453.6656eb8e.chunk.js",
+    "index.html": "/mahalanobis/index.html",
+    "main.e6c13ad2.css.map": "/mahalanobis/static/css/main.e6c13ad2.css.map",
+    "main.bb478f52.js.map": "/mahalanobis/static/js/main.bb478f52.js.map",
+    "453.6656eb8e.chunk.js.map": "/mahalanobis/static/js/453.6656eb8e.chunk.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.e6c13ad2.css",
+    "static/js/main.bb478f52.js"
+  ]
+}
