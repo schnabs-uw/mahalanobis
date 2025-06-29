@@ -28,13 +28,11 @@ The app will be available at `http://localhost:8050`
 
 ### Installation
 ```powershell
-cd mahalanobis-frontend
 npm install
 ```
 
 ### Running the App
 ```powershell
-cd mahalanobis-frontend
 npm start
 ```
 
