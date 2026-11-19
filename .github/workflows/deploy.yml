@@ -8,12 +8,10 @@ on:
 
 permissions:
   contents: read
-  pages: write
-  id-token: write
 
 concurrency:
-  group: pages-${{ github.ref }}
-  cancel-in-progress: false
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   build:
@@ -29,17 +27,24 @@ jobs:
       - run: npm test
       # Also type-checks (tsc -b runs before vite build).
       - run: npm run build
-      - if: github.event_name != 'pull_request'
+      - if: github.ref == 'refs/heads/master'
         uses: actions/configure-pages@v6
-      - if: github.event_name != 'pull_request'
+      - if: github.ref == 'refs/heads/master'
         uses: actions/upload-pages-artifact@v5
         with:
           path: dist
 
   deploy:
-    if: github.event_name != 'pull_request'
+    if: github.ref == 'refs/heads/master'
     needs: build
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    concurrency:
+      group: pages
+      cancel-in-progress: false
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}

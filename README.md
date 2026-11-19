@@ -25,7 +25,7 @@ All calculations run in the browser.
 
 ## Getting started
 
-Requires Node.js 20.19+ or 22.12+ (CI uses Node 24) and npm.
+Requires Node.js 22.22.2+ or 24.15+ (CI uses Node 24) and npm.
 
 ```sh
 npm install
@@ -58,7 +58,7 @@ src/
 
 ## Deployment
 
-`.github/workflows/deploy.yml` lints, tests and builds every pull request and push. Pushes to `master` also publish `dist/` to GitHub Pages. The site is served from `/mahalanobis/`, which is set as `base` in `vite.config.ts`.
+`.github/workflows/deploy.yml` lints, tests and builds every pull request and every push to `master`. Pushes to `master` also publish `dist/` to GitHub Pages. To redeploy without a new commit, run the workflow on `master` from the Actions tab (Run workflow); a manual run on any other branch only builds and tests. The site is served from `/mahalanobis/`, which is set as `base` in `vite.config.ts`.
 
 ## License
 
