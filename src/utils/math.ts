@@ -5,32 +5,46 @@ export interface Point {
     y: number;
 }
 
-export function calculateMahalanobisDistance(point: Point, dataset: Point[]): number {
-    if (dataset.length < 2) return 0;
+export interface MeanAndCovariance {
+    mean: Point;
+    covariance: number[][];
+}
 
-    // Calculate mean
-    const mean = dataset.reduce(
-        (acc, p) => ({ x: acc.x + p.x / dataset.length, y: acc.y + p.y / dataset.length }),
+export interface EigenDecomposition {
+    values: number[];
+    vectors: number[][];
+}
+
+/** Returns null for fewer than 2 points, where covariance is undefined. */
+export function calculateMeanAndCovariance(points: Point[]): MeanAndCovariance | null {
+    if (points.length < 2) return null;
+    const n = points.length;
+
+    const mean = points.reduce(
+        (acc, p) => ({ x: acc.x + p.x / n, y: acc.y + p.y / n }),
         { x: 0, y: 0 }
     );
 
-    // Calculate covariance matrix
-    const covMatrix = [[0, 0], [0, 0]];
-    dataset.forEach(p => {
+    const covariance = [[0, 0], [0, 0]];
+    points.forEach(p => {
         const dx = p.x - mean.x;
         const dy = p.y - mean.y;
-        covMatrix[0][0] += dx * dx / dataset.length;
-        covMatrix[0][1] += dx * dy / dataset.length;
-        covMatrix[1][0] += dx * dy / dataset.length;
-        covMatrix[1][1] += dy * dy / dataset.length;
+        covariance[0][0] += dx * dx / n;
+        covariance[0][1] += dx * dy / n;
+        covariance[1][0] += dx * dy / n;
+        covariance[1][1] += dy * dy / n;
     });
 
-    // Add small regularization term
-    covMatrix[0][0] += 1e-6;
-    covMatrix[1][1] += 1e-6;
+    // Keeps the matrix invertible when all points lie on one line.
+    covariance[0][0] += 1e-6;
+    covariance[1][1] += 1e-6;
 
+    return { mean, covariance };
+}
+
+export function calculateMahalanobisDistance(point: Point, { mean, covariance }: MeanAndCovariance): number {
     try {
-        const invCov = inv(covMatrix);
+        const invCov = inv(covariance);
         const dx = point.x - mean.x;
         const dy = point.y - mean.y;
         return Math.sqrt(
@@ -44,7 +58,7 @@ export function calculateMahalanobisDistance(point: Point, dataset: Point[]): nu
     }
 }
 
-export function calculateEigenvectors(matrix: number[][]): { values: number[], vectors: number[][] } {
+export function calculateEigenvectors(matrix: number[][]): EigenDecomposition {
     // Power iteration method for largest eigenvalue/vector
     const powerIteration = (matrix: number[][], maxIter: number = 100): { value: number, vector: number[] } => {
         // Use a deterministic starting vector instead of random to ensure consistency
@@ -95,50 +109,19 @@ export function calculateEigenvectors(matrix: number[][]): { values: number[], v
     };
 }
 
-export function calculateEllipse(dataset: Point[], nStd: number = 1): Point[] {
-    if (dataset.length < 2) return [];
+export function calculateEllipse(mean: Point, { values: eigenvalues, vectors: eigenvectors }: EigenDecomposition, nStd: number = 1): Point[] {
+    const points: Point[] = [];
+    const steps = 100;
+    for (let i = 0; i < steps; i++) {
+        const angle = (2 * Math.PI * i) / steps;
+        const x = Math.cos(angle) * nStd * Math.sqrt(Math.abs(eigenvalues[0]));
+        const y = Math.sin(angle) * nStd * Math.sqrt(Math.abs(eigenvalues[1]));
 
-    // Calculate mean
-    const mean = dataset.reduce(
-        (acc, p) => ({ x: acc.x + p.x / dataset.length, y: acc.y + p.y / dataset.length }),
-        { x: 0, y: 0 }
-    );
+        // Transform point
+        const transformedX = mean.x + x * eigenvectors[0][0] + y * eigenvectors[0][1];
+        const transformedY = mean.y + x * eigenvectors[1][0] + y * eigenvectors[1][1];
 
-    // Calculate covariance matrix
-    const covMatrix = [[0, 0], [0, 0]];
-    dataset.forEach(p => {
-        const dx = p.x - mean.x;
-        const dy = p.y - mean.y;
-        covMatrix[0][0] += dx * dx / dataset.length;
-        covMatrix[0][1] += dx * dy / dataset.length;
-        covMatrix[1][0] += dx * dy / dataset.length;
-        covMatrix[1][1] += dy * dy / dataset.length;
-    });
-
-    // Add small regularization term
-    covMatrix[0][0] += 1e-6;
-    covMatrix[1][1] += 1e-6;
-
-    try {
-        const { values: eigenvalues, vectors: eigenvectors } = calculateEigenvectors(covMatrix);
-
-        // Generate ellipse points
-        const points: Point[] = [];
-        const steps = 100;
-        for (let i = 0; i < steps; i++) {
-            const angle = (2 * Math.PI * i) / steps;
-            const x = Math.cos(angle) * nStd * Math.sqrt(Math.abs(eigenvalues[0]));
-            const y = Math.sin(angle) * nStd * Math.sqrt(Math.abs(eigenvalues[1]));
-            
-            // Transform point
-            const transformedX = mean.x + x * eigenvectors[0][0] + y * eigenvectors[0][1];
-            const transformedY = mean.y + x * eigenvectors[1][0] + y * eigenvectors[1][1];
-            
-            points.push({ x: transformedX, y: transformedY });
-        }
-        return points;
-    } catch (e) {
-        console.warn('Error calculating ellipse:', e);
-        return [];
+        points.push({ x: transformedX, y: transformedY });
     }
+    return points;
 }

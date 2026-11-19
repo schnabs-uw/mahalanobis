@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import ReactECharts from 'echarts-for-react';
-import { type Point, calculateMahalanobisDistance, calculateEllipse, calculateEigenvectors } from '../utils/math';
+import { type Point, calculateMeanAndCovariance, calculateMahalanobisDistance, calculateEllipse, calculateEigenvectors } from '../utils/math';
 import { 
     Button, 
     Stack, 
@@ -65,46 +65,17 @@ export const MahalanobisPlot: React.FC<MahalanobisPlotProps> = ({
         setDatasetPoints(generateRandomPoints(initialDatasetPoints));
         setTestPoints(generateRandomPoints(initialTestPoints));
     }, [initialDatasetPoints, initialTestPoints]);    const getChartOptions = () => {
-        // Calculate mean, covariance matrix, and eigenvectors
-        let mean = { x: 0, y: 0 };
-        let covMatrix = [[0, 0], [0, 0]];
-        
-        if (datasetPoints.length >= 2) {
-            // Calculate mean
-            mean = datasetPoints.reduce(
-                (acc, p) => ({ 
-                    x: acc.x + p.x / datasetPoints.length, 
-                    y: acc.y + p.y / datasetPoints.length 
-                }),
-                { x: 0, y: 0 }
-            );
+        const stats = calculateMeanAndCovariance(datasetPoints);
+        const mean = stats?.mean ?? { x: 0, y: 0 };
+        const eigen = stats ? calculateEigenvectors(stats.covariance) : null;
+        const eigenvalues = eigen?.values ?? [];
+        const eigenvectors = eigen?.vectors ?? [];
 
-            // Calculate covariance matrix
-            datasetPoints.forEach(p => {
-                const dx = p.x - mean.x;
-                const dy = p.y - mean.y;
-                covMatrix[0][0] += dx * dx / datasetPoints.length;
-                covMatrix[0][1] += dx * dy / datasetPoints.length;
-                covMatrix[1][0] += dx * dy / datasetPoints.length;
-                covMatrix[1][1] += dy * dy / datasetPoints.length;
-            });
+        const ellipses = eigen ? [1, 2, 3].map(std => calculateEllipse(mean, eigen, std)) : [];
 
-            // Add small regularization term
-            covMatrix[0][0] += 1e-6;
-            covMatrix[1][1] += 1e-6;
-        }
-
-        const ellipses = datasetPoints.length >= 2 
-            ? [1, 2, 3].map(std => calculateEllipse(datasetPoints, std))
-            : [];
-
-        const distances = testPoints.map(point => 
-            calculateMahalanobisDistance(point, datasetPoints)
+        const distances = testPoints.map(point =>
+            stats ? calculateMahalanobisDistance(point, stats) : 0
         );
-
-        // Calculate eigenvectors and scale them for visualization
-        const { values: eigenvalues, vectors: eigenvectors } = 
-            datasetPoints.length >= 2 ? calculateEigenvectors(covMatrix) : { values: [], vectors: [] };
 
         // Scale factor for eigenvector visualization
         const scaleFactor = 5;
