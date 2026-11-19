@@ -1,4 +1,4 @@
-import { Matrix, det, inv, multiply, subtract, transpose } from 'mathjs';
+import { inv, multiply, subtract, transpose } from 'mathjs';
 
 export interface Point {
     x: number;
@@ -45,9 +45,6 @@ export function calculateMahalanobisDistance(point: Point, dataset: Point[]): nu
 }
 
 export function calculateEigenvectors(matrix: number[][]): { values: number[], vectors: number[][] } {
-    const n = matrix.length;
-    const identity = Array(n).fill(0).map((_, i) => Array(n).fill(0).map((_, j) => i === j ? 1 : 0));
-    
     // Power iteration method for largest eigenvalue/vector
     const powerIteration = (matrix: number[][], maxIter: number = 100): { value: number, vector: number[] } => {
         // Use a deterministic starting vector instead of random to ensure consistency
