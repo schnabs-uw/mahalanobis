@@ -1,24 +1,6 @@
 # Mahalanobis Distance Interactive Demo
 
-This repository contains both Python (Dash) and React implementations of an interactive Mahalanobis Distance visualization tool.
-
-## Python Version (Dash)
-
-### Requirements
-- Python 3.x
-- Required packages are listed in `requirements.txt`
-
-### Installation
-```powershell
-pip install -r requirements.txt
-```
-
-### Running the App
-```powershell
-python mahalanobis_distance_app.py
-```
-
-The app will be available at `http://localhost:8050`
+This repository contains a React implementation of an interactive Mahalanobis Distance visualization tool.
 
 ## React Version (TypeScript)
 
@@ -38,7 +20,7 @@ npm start
 
 The app will be available at `http://localhost:3000`
 
-## Features (Both Versions)
+## Features
 
 - Interactive visualization of Mahalanobis Distance
 - Dataset and Test point manipulation
@@ -62,12 +44,6 @@ The app will be available at `http://localhost:3000`
 
 ## Implementation Details
 
-### Python Version
-- Built with Dash and Plotly
-- Uses NumPy for mathematical operations
-- Dash callbacks for reactivity
-
-### React Version
 - Built with React and TypeScript
 - Uses ECharts for visualization
 - Uses mathjs for mathematical operations
