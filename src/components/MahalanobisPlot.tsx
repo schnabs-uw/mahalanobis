@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import ReactECharts from 'echarts-for-react';
-import { Point, calculateMahalanobisDistance, calculateEllipse, calculateEigenvectors } from '../utils/math';
+import { type Point, calculateMahalanobisDistance, calculateEllipse, calculateEigenvectors } from '../utils/math';
 import { 
     Button, 
     Stack, 
