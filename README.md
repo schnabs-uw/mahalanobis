@@ -1,54 +1,65 @@
 # Mahalanobis Distance Interactive Demo
 
-This repository contains a React implementation of an interactive Mahalanobis Distance visualization tool.
+An interactive, browser-only visualization of [Mahalanobis distance](https://en.wikipedia.org/wiki/Mahalanobis_distance): how far a point is from a cloud of points once the cloud's spread and correlation are taken into account.
 
-## React Version (TypeScript)
+Live demo: https://schnabs-uw.github.io/mahalanobis/
 
-### Requirements
-- Node.js (LTS version)
-- npm (comes with Node.js)
+## What it shows
 
-### Installation
-```powershell
+- A random dataset (blue) and random test points (red), each test point labeled with its Mahalanobis distance from the dataset
+- The 1, 2 and 3 standard-deviation covariance ellipses of the dataset
+- The covariance matrix's eigenvectors (the ellipse axes), labeled with their eigenvalues
+- Buttons to add points and to regenerate all points, only the dataset, or only the test points
+- Editable tables to change or delete individual points; the plot updates immediately
+
+All calculations run in the browser.
+
+## Tech stack
+
+- [React](https://react.dev/) 19 and TypeScript
+- [Vite](https://vite.dev/) for the dev server and build
+- [MUI](https://mui.com/) for the UI components
+- [ECharts](https://echarts.apache.org/) (via `echarts-for-react`) for the chart
+- [mathjs](https://mathjs.org/) for matrix operations
+- [Vitest](https://vitest.dev/) and React Testing Library for tests, [oxlint](https://oxc.rs/docs/guide/usage/linter) for linting
+
+## Getting started
+
+Requires Node.js 20.19+ or 22.12+ (CI uses Node 24) and npm.
+
+```sh
 npm install
+npm run dev
 ```
 
-### Running the App
-```powershell
-npm start
+Then open http://localhost:5173/mahalanobis/.
+
+## Scripts
+
+| Command | What it does |
+|---|---|
+| `npm run dev` | Start the dev server with hot reload |
+| `npm run build` | Type-check and build the production site into `dist/` |
+| `npm run preview` | Serve the built `dist/` locally |
+| `npm run typecheck` | Type-check only |
+| `npm run lint` | Lint with oxlint |
+| `npm test` | Run the tests once |
+| `npm run test:watch` | Run the tests in watch mode |
+
+## Project layout
+
+```
+src/
+├── main.tsx                      Entry point
+├── App.tsx                       MUI theme and page layout
+├── components/MahalanobisPlot.tsx  Controls, chart and point tables
+└── utils/math.ts                 Distance, eigenvector and ellipse math
 ```
 
-The app will be available at `http://localhost:3000`
+## Deployment
 
-## Features
-
-- Interactive visualization of Mahalanobis Distance
-- Dataset and Test point manipulation
-- Real-time calculation and display of:
-  - Mahalanobis distances
-  - Covariance ellipses (1, 2, and 3 standard deviations)
-  - Dataset and test point coordinates
-
-### Interactive Elements
-- Add individual points to either dataset
-- Regenerate random points (all, dataset, or test points)
-- Edit point coordinates through tables
-- Delete individual points
-- Visual feedback with distances displayed above test points
-
-### Mathematical Components
-- Covariance matrix calculation
-- Eigenvalue/eigenvector computation
-- Mahalanobis distance calculation
-- Ellipse generation based on covariance
-
-## Implementation Details
-
-- Built with React and TypeScript
-- Uses ECharts for visualization
-- Uses mathjs for mathematical operations
-- Material-UI for modern UI components
-- Client-side calculations for improved responsiveness
+`.github/workflows/deploy.yml` lints, tests and builds every pull request and push. Pushes to `master` also publish `dist/` to GitHub Pages. The site is served from `/mahalanobis/`, which is set as `base` in `vite.config.ts`.
 
 ## License
-MIT License
+
+MIT
