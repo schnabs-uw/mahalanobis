@@ -63,39 +63,105 @@ describe('calculateMahalanobisDistance', () => {
 });
 
 describe('calculateEigenvectors', () => {
-    const matrix = [[2, 1], [1, 1]];
-    const { values, vectors } = calculateEigenvectors(matrix);
-    const column = (i: number) => [vectors[0][i], vectors[1][i]];
+    const column = (vectors: number[][], i: number) => [vectors[0][i], vectors[1][i]];
 
-    test('returns the eigenvalues, largest first', () => {
-        expect(values[0]).toBeCloseTo((3 + Math.sqrt(5)) / 2, 6);
-        expect(values[1]).toBeCloseTo((3 - Math.sqrt(5)) / 2, 6);
-    });
-
-    test('returns unit eigenvectors as columns, with A·v = λ·v', () => {
+    // Checks A·v = λ·v, unit length, orthogonality, largest-first order and the sign rule.
+    function expectValidDecomposition(matrix: number[][]) {
+        const { values, vectors } = calculateEigenvectors(matrix);
+        const scale = Math.max(Math.abs(values[0]), 1e-12);
+        expect(values[0]).toBeGreaterThanOrEqual(values[1]);
         for (const i of [0, 1]) {
-            const [vx, vy] = column(i);
-            expect(Math.hypot(vx, vy)).toBeCloseTo(1, 6);
-            expect(matrix[0][0] * vx + matrix[0][1] * vy).toBeCloseTo(values[i] * vx, 6);
-            expect(matrix[1][0] * vx + matrix[1][1] * vy).toBeCloseTo(values[i] * vy, 6);
+            const [vx, vy] = column(vectors, i);
+            expect(Math.hypot(vx, vy)).toBeCloseTo(1, 9);
+            expect(Math.abs(matrix[0][0] * vx + matrix[0][1] * vy - values[i] * vx) / scale).toBeLessThan(1e-9);
+            expect(Math.abs(matrix[1][0] * vx + matrix[1][1] * vy - values[i] * vy) / scale).toBeLessThan(1e-9);
+            const firstNonZero = [vx, vy].find(x => Math.abs(x) > 1e-10);
+            expect(firstNonZero).toBeGreaterThan(0);
         }
+        const [ax, ay] = column(vectors, 0);
+        const [bx, by] = column(vectors, 1);
+        expect(ax * bx + ay * by).toBeCloseTo(0, 9);
+        return { values, vectors };
+    }
+
+    test('handles a tilted matrix', () => {
+        const { values } = expectValidDecomposition([[2, 1], [1, 1]]);
+        expect(values[0]).toBeCloseTo((3 + Math.sqrt(5)) / 2, 9);
+        expect(values[1]).toBeCloseTo((3 - Math.sqrt(5)) / 2, 9);
     });
 
-    test('orients each eigenvector so its first non-zero component is positive', () => {
-        expect(column(0)[0]).toBeGreaterThan(0);
-        expect(column(1)[0]).toBeGreaterThan(0);
+    test('handles a diagonal matrix with the larger spread along x', () => {
+        const { values, vectors } = expectValidDecomposition([[3, 0], [0, 1]]);
+        expect(values[0]).toBeCloseTo(3, 9);
+        expect(values[1]).toBeCloseTo(1, 9);
+        expect(column(vectors, 0)).toEqual([1, 0]);
+        expect(column(vectors, 1)[0]).toBeCloseTo(0, 9);
+        expect(column(vectors, 1)[1]).toBeCloseTo(1, 9);
+    });
+
+    test('handles a diagonal matrix with the larger spread along y', () => {
+        const { values, vectors } = expectValidDecomposition([[1, 0], [0, 4]]);
+        expect(values[0]).toBeCloseTo(4, 9);
+        expect(values[1]).toBeCloseTo(1, 9);
+        expect(column(vectors, 0)[0]).toBeCloseTo(0, 9);
+        expect(column(vectors, 0)[1]).toBeCloseTo(1, 9);
+        expect(column(vectors, 1)[0]).toBeCloseTo(1, 9);
+        expect(column(vectors, 1)[1]).toBeCloseTo(0, 9);
+    });
+
+    test('handles a multiple of the identity, where every direction is an eigenvector', () => {
+        const { values } = expectValidDecomposition([[2, 0], [0, 2]]);
+        expect(values).toEqual([2, 2]);
+    });
+
+    test('finds the axes of a nearly circular tilted matrix', () => {
+        // Eigenvalues 1.01 and 1 along axes rotated by 30°.
+        const angle = Math.PI / 6;
+        const c = Math.cos(angle);
+        const s = Math.sin(angle);
+        const matrix = [
+            [1.01 * c * c + s * s, 0.01 * c * s],
+            [0.01 * c * s, 1.01 * s * s + c * c],
+        ];
+        const { values, vectors } = expectValidDecomposition(matrix);
+        expect(values[0]).toBeCloseTo(1.01, 9);
+        expect(values[1]).toBeCloseTo(1, 9);
+        expect(column(vectors, 0)[0]).toBeCloseTo(c, 9);
+        expect(column(vectors, 0)[1]).toBeCloseTo(s, 9);
+    });
+
+    test('is valid for the covariance of many random datasets', () => {
+        // Seeded so a failure is reproducible.
+        let seed = 12345;
+        const random = () => {
+            seed = (seed * 1664525 + 1013904223) % 2 ** 32;
+            return seed / 2 ** 32;
+        };
+        for (let run = 0; run < 500; run++) {
+            const points = Array.from({ length: 20 }, () => ({ x: random() * 30 - 5, y: random() * 30 - 5 }));
+            expectValidDecomposition(stats(points).covariance);
+        }
     });
 });
 
 describe('calculateEllipse', () => {
-    const s = stats(tilted);
-    const eigen = calculateEigenvectors(s.covariance);
+    const datasets: [string, Point[]][] = [
+        ['a tilted dataset', tilted],
+        ['a wide axis-aligned rectangle', [{ x: 0, y: 0 }, { x: 4, y: 0 }, { x: 0, y: 2 }, { x: 4, y: 2 }]],
+        ['a tall axis-aligned rectangle', [{ x: 0, y: 0 }, { x: 2, y: 0 }, { x: 0, y: 4 }, { x: 2, y: 4 }]],
+        ['two identical points', [{ x: 1, y: 1 }, { x: 1, y: 1 }]],
+    ];
 
-    test.each([1, 2, 3])('returns 100 points that are all %i Mahalanobis units from the mean', (nStd) => {
-        const points = calculateEllipse(s.mean, eigen, nStd);
-        expect(points).toHaveLength(100);
-        for (const point of points) {
-            expect(calculateMahalanobisDistance(point, s)).toBeCloseTo(nStd, 5);
-        }
+    describe.each(datasets)('for %s', (_, dataset) => {
+        const s = stats(dataset);
+        const eigen = calculateEigenvectors(s.covariance);
+
+        test.each([1, 2, 3])('returns 100 points that are all %i Mahalanobis units from the mean', (nStd) => {
+            const points = calculateEllipse(s.mean, eigen, nStd);
+            expect(points).toHaveLength(100);
+            for (const point of points) {
+                expect(calculateMahalanobisDistance(point, s)).toBeCloseTo(nStd, 5);
+            }
+        });
     });
 });
