@@ -12,7 +12,7 @@ Live demo: https://schnabs-uw.github.io/mahalanobis/
 - Buttons to add points and to regenerate all points, only the dataset, or only the test points
 - Editable tables to change or delete individual points; the plot updates immediately
 
-All calculations run in the browser.
+All calculations run in the browser. The covariance is the sample covariance, divided by n−1, the same as NumPy's `np.cov`.
 
 ## Tech stack
 

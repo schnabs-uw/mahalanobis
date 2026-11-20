@@ -230,6 +230,9 @@ export const MahalanobisPlot: React.FC<MahalanobisPlotProps> = ({
                         style={{ height: '600px' }} 
                         notMerge={true}
                     />
+                    <Typography variant="caption" color="text.secondary">
+                        Covariance uses the sample formula, dividing by n−1.
+                    </Typography>
                 </Box>
                 {/* Tables Column */}
                 <Box sx={{ width: '30%' }}>

@@ -13,4 +13,5 @@ test('renders the controls, chart and point tables', () => {
   expect(screen.getByTestId('chart')).toBeInTheDocument()
   expect(screen.getByText('Dataset Points')).toBeInTheDocument()
   expect(screen.getByText('Test Points')).toBeInTheDocument()
+  expect(screen.getByText('Covariance uses the sample formula, dividing by n−1.')).toBeInTheDocument()
 })

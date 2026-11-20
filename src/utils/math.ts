@@ -25,14 +25,15 @@ export function calculateMeanAndCovariance(points: Point[]): MeanAndCovariance |
         { x: 0, y: 0 }
     );
 
+    // Sample covariance (divided by n−1), the same as NumPy's np.cov.
     const covariance = [[0, 0], [0, 0]];
     points.forEach(p => {
         const dx = p.x - mean.x;
         const dy = p.y - mean.y;
-        covariance[0][0] += dx * dx / n;
-        covariance[0][1] += dx * dy / n;
-        covariance[1][0] += dx * dy / n;
-        covariance[1][1] += dy * dy / n;
+        covariance[0][0] += dx * dx / (n - 1);
+        covariance[0][1] += dx * dy / (n - 1);
+        covariance[1][0] += dx * dy / (n - 1);
+        covariance[1][1] += dy * dy / (n - 1);
     });
 
     // Keeps the matrix invertible when all points lie on one line.

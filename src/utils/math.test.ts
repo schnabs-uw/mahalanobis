@@ -7,8 +7,8 @@ import {
     calculateMeanAndCovariance,
 } from './math';
 
-// Worked by hand: mean (2, 1); covariance divided by n = 4 is [[2, 1], [1, 1]];
-// its inverse is [[1, -1], [-1, 2]]; its eigenvalues are (3 ± √5) / 2.
+// Worked by hand: mean (2, 1); covariance divided by n−1 = 3 is [[8/3, 4/3], [4/3, 4/3]];
+// its inverse is [[3/4, -3/4], [-3/4, 3/2]].
 const tilted: Point[] = [
     { x: 0, y: 0 },
     { x: 2, y: 2 },
@@ -28,13 +28,13 @@ describe('calculateMeanAndCovariance', () => {
         expect(calculateMeanAndCovariance([{ x: 1, y: 2 }])).toBeNull();
     });
 
-    test('returns the mean and the covariance divided by n', () => {
+    test('returns the mean and the covariance divided by n−1', () => {
         const { mean, covariance } = stats(tilted);
         expect(mean).toEqual({ x: 2, y: 1 });
-        expect(covariance[0][0]).toBeCloseTo(2, 5);
-        expect(covariance[0][1]).toBeCloseTo(1, 5);
-        expect(covariance[1][0]).toBeCloseTo(1, 5);
-        expect(covariance[1][1]).toBeCloseTo(1, 5);
+        expect(covariance[0][0]).toBeCloseTo(8 / 3, 5);
+        expect(covariance[0][1]).toBeCloseTo(4 / 3, 5);
+        expect(covariance[1][0]).toBeCloseTo(4 / 3, 5);
+        expect(covariance[1][1]).toBeCloseTo(4 / 3, 5);
     });
 
     test('keeps points on a straight line usable for distances', () => {
@@ -51,14 +51,14 @@ describe('calculateMahalanobisDistance', () => {
     });
 
     test('matches hand-computed distances', () => {
-        expect(calculateMahalanobisDistance({ x: 3, y: 1 }, s)).toBeCloseTo(1, 5);
-        expect(calculateMahalanobisDistance({ x: 2, y: 2 }, s)).toBeCloseTo(Math.SQRT2, 5);
+        expect(calculateMahalanobisDistance({ x: 3, y: 1 }, s)).toBeCloseTo(Math.sqrt(3) / 2, 5);
+        expect(calculateMahalanobisDistance({ x: 2, y: 2 }, s)).toBeCloseTo(Math.sqrt(6) / 2, 5);
     });
 
     test('gives different distances to points the same Euclidean distance from the mean', () => {
         // Both points are 2 units from the mean; the cloud is more spread out along x.
-        expect(calculateMahalanobisDistance({ x: 4, y: 1 }, s)).toBeCloseTo(2, 5);
-        expect(calculateMahalanobisDistance({ x: 2, y: 3 }, s)).toBeCloseTo(2 * Math.SQRT2, 5);
+        expect(calculateMahalanobisDistance({ x: 4, y: 1 }, s)).toBeCloseTo(Math.sqrt(3), 5);
+        expect(calculateMahalanobisDistance({ x: 2, y: 3 }, s)).toBeCloseTo(Math.sqrt(6), 5);
     });
 });
 
