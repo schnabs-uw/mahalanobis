@@ -1,4 +1,4 @@
-import { inv, multiply, subtract, transpose } from 'mathjs';
+import { inv } from 'mathjs';
 
 export interface Point {
     x: number;
@@ -59,53 +59,33 @@ export function calculateMahalanobisDistance(point: Point, { mean, covariance }:
 }
 
 export function calculateEigenvectors(matrix: number[][]): EigenDecomposition {
-    // Power iteration method for largest eigenvalue/vector
-    const powerIteration = (matrix: number[][], maxIter: number = 100): { value: number, vector: number[] } => {
-        // Use a deterministic starting vector instead of random to ensure consistency
-        let vector = [1, 0]; // Start with a consistent initial vector
-        let value = 0;
-        
-        for (let i = 0; i < maxIter; i++) {
-            const newVector = multiply(matrix, vector) as number[];            const norm = Math.sqrt(newVector.reduce((sum, x) => sum + x * x, 0));
-            vector = newVector.map(x => x / norm);
-            const vectorMatrix = [vector]; // Create a 1xN matrix
-            const vectorMatrixTranspose = transpose(vectorMatrix); // Create an Nx1 matrix
-            const temp = multiply(vectorMatrix, matrix) as number[][]; // 1xN * NxN = 1xN
-            value = (multiply(temp, vectorMatrixTranspose) as number[][])[0][0]; // 1xN * Nx1 = 1x1
-        }
-        
-        return { value, vector };
-    };
-    
-    // Normalize eigenvector direction for consistency
+    // Closed form for a symmetric 2×2 matrix [[a, b], [b, d]].
+    const [[a, b], [, d]] = matrix;
+    const center = (a + d) / 2;
+    const radius = Math.hypot((a - d) / 2, b);
+    // Angle of the major axis; atan2 also covers diagonal matrices, including a > d, a < d and a = d.
+    const angle = Math.atan2(2 * b, a - d) / 2;
+    const cos = Math.cos(angle);
+    const sin = Math.sin(angle);
+
+    // Orient each eigenvector so its first non-zero component is positive, so the arrows don't flip.
     const normalizeDirection = (vector: number[]): number[] => {
-        // Always orient the eigenvector so that the first non-zero component is positive
-        // This ensures consistent direction regardless of convergence path
         const firstNonZeroIndex = vector.findIndex(x => Math.abs(x) > 1e-10);
         if (firstNonZeroIndex !== -1 && vector[firstNonZeroIndex] < 0) {
             return vector.map(x => -x);
         }
         return vector;
     };
-    
-    const result1 = powerIteration(matrix);
-    result1.vector = normalizeDirection(result1.vector);
-    
-    // Deflate matrix to find second eigenvalue/vector
-    const deflated = subtract(
-        matrix,
-        multiply(
-            multiply(transpose([result1.vector]), [result1.vector]),
-            result1.value
-        )
-    ) as number[][];
-    
-    const result2 = powerIteration(deflated);
-    result2.vector = normalizeDirection(result2.vector);
-    
+
+    const [v1x, v1y] = normalizeDirection([cos, sin]);
+    const [v2x, v2y] = normalizeDirection([-sin, cos]);
+
     return {
-        values: [result1.value, result2.value],
-        vectors: transpose([result1.vector, result2.vector]) as number[][]
+        values: [center + radius, center - radius],
+        vectors: [
+            [v1x, v2x],
+            [v1y, v2y],
+        ],
     };
 }
 
